@@ -18,6 +18,19 @@ const validatePhone = (phone) => {
   return /^\d{10,11}$/.test(phoneStr);
 };
 
+// Helper function to validate email format
+const validateEmail = (email) => {
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  return emailRegex.test(String(email).toLowerCase());
+};
+
+// Helper function to validate password strength
+// Minimum 8 characters, at least 1 uppercase, 1 lowercase, 1 number, 1 special character
+const validatePasswordStrength = (password) => {
+  const passwordRegex = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&])[A-Za-z\d@$!%*?&]{8,}$/;
+  return passwordRegex.test(password);
+};
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
@@ -26,9 +39,27 @@ router.post('/register', async (req, res) => {
       return res.status(400).json({ message: 'All fields are required' });
     }
 
+    // Validate name (trim, not empty)
+    const trimmedName = String(name).trim();
+    if (trimmedName.length < 2 || trimmedName.length > 100) {
+      return res.status(400).json({ message: 'Name must be 2-100 characters' });
+    }
+
+    // Validate email format
+    if (!validateEmail(email)) {
+      return res.status(400).json({ message: 'Invalid email format' });
+    }
+
+    // Validate password strength
+    if (!validatePasswordStrength(password)) {
+      return res.status(400).json({
+        message: 'Password must be at least 8 characters with uppercase, lowercase, number, and special character (@$!%*?&)',
+      });
+    }
+
     // Validate phone format (integer digits only)
     if (!validatePhone(phone)) {
-      return res.status(400).json({ message: 'Phone must be 10-11 digits only (no letters or special characters)' });
+      return res.status(400).json({ message: 'Phone must be 10-11 digits only' });
     }
 
     const organization = await Organization.findOne({ code: orgCode.trim().toUpperCase(), isActive: true });
@@ -45,7 +76,7 @@ router.post('/register', async (req, res) => {
     const phoneNumber = parseInt(String(phone), 10);
 
     const user = await User.create({
-      name: name.trim(),
+      name: trimmedName,
       email: email.trim().toLowerCase(),
       password,
       phone: phoneNumber,
@@ -64,7 +95,13 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-    const user = await User.findOne({ email: (email || '').trim().toLowerCase() }).select('+password').populate('organization');
+    if (!email || !password) {
+      return res.status(400).json({ message: 'Email and password are required' });
+    }
+
+    const user = await User.findOne({ email: (email || '').trim().toLowerCase() })
+      .select('+password')
+      .populate('organization');
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }

@@ -12,12 +12,19 @@ import { useAuth } from '../context/AuthContext';
 
 const steps = ['Find Ride', 'Route Confirmation', 'Available Rides'];
 
+const todayStr = () => new Date().toISOString().slice(0, 10);
+const maxDateStr = () => {
+  const d = new Date();
+  d.setFullYear(d.getFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+};
+
 export default function FindRide() {
   const { user } = useAuth();
   const [step, setStep] = useState(0);
   const [pickup, setPickup] = useState(null);
   const [destination, setDestination] = useState(null);
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
+  const [date, setDate] = useState(todayStr());
   const [time, setTime] = useState('09:00');
   const [seats, setSeats] = useState(1);
   const [recurring, setRecurring] = useState(false);
@@ -93,7 +100,8 @@ export default function FindRide() {
             <div className="grid sm:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted flex items-center gap-1"><Calendar size={12} /> Travel date</label>
-                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 w-full px-4 py-2.5 rounded-xl border border-black/10 text-sm" />
+                <input type="date" value={date} min={todayStr()} max={maxDateStr()}
+                  onChange={(e) => setDate(e.target.value)} className="mt-1.5 w-full px-4 py-2.5 rounded-xl border border-black/10 text-sm" />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted flex items-center gap-1"><Clock size={12} /> Travel time</label>

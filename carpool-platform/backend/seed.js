@@ -245,6 +245,7 @@ async function run() {
 
     const pickup = PLACES[tripIdx % PLACES.length];
     const destination = OFFICE;
+<<<<<<< Updated upstream
     const route = buildRoute(pickup, destination);
 
     // Create trip with passengers
@@ -261,6 +262,12 @@ async function run() {
       ride: activeRides[tripIdx % activeRides.length]._id,
       driver: drivers[driverIdx].user._id,
       vehicle: drivers[driverIdx].vehicle._id,
+=======
+    const route = await buildRoute(pickup, destination);
+    await Ride.create({
+      driver: drivers[i].user._id,
+      vehicle: drivers[i].vehicle._id,
+>>>>>>> Stashed changes
       organization: org._id,
       passengers: passengerArray,
       pickup,

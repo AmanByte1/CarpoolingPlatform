@@ -3,6 +3,7 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/User');
 const Organization = require('../models/Organization');
 const { protect } = require('../middleware/auth');
+const { isValidPhone } = require('../utils/validate');
 
 const router = express.Router();
 
@@ -37,6 +38,9 @@ router.post('/register', async (req, res) => {
     const { name, email, password, phone, orgCode } = req.body;
     if (!name || !email || !password || !phone || !orgCode) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+    if (!isValidPhone(phone)) {
+      return res.status(400).json({ message: 'Phone must be a 10-digit number starting with 6–9' });
     }
 
     // Validate name (trim, not empty)
@@ -79,7 +83,11 @@ router.post('/register', async (req, res) => {
       name: trimmedName,
       email: email.trim().toLowerCase(),
       password,
+<<<<<<< Updated upstream
       phone: phoneNumber,
+=======
+      phone: String(phone).trim(),
+>>>>>>> Stashed changes
       organization: organization._id,
     });
 
@@ -98,10 +106,14 @@ router.post('/login', async (req, res) => {
     if (!email || !password) {
       return res.status(400).json({ message: 'Email and password are required' });
     }
+<<<<<<< Updated upstream
 
     const user = await User.findOne({ email: (email || '').trim().toLowerCase() })
       .select('+password')
       .populate('organization');
+=======
+    const user = await User.findOne({ email: (email || '').trim().toLowerCase() }).select('+password').populate('organization');
+>>>>>>> Stashed changes
     if (!user || !(await user.comparePassword(password))) {
       return res.status(401).json({ message: 'Invalid email or password' });
     }

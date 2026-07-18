@@ -4,6 +4,7 @@ const Vehicle = require('../models/Vehicle');
 const Trip = require('../models/Trip');
 const { protect } = require('../middleware/auth');
 const { buildRoute, distanceKm } = require('../utils/geo');
+const { validateDepartureDate } = require('../utils/validate');
 const { predictFare } = require('../ml/farePredictor');
 const { scoreRides } = require('../ml/matchScore');
 
@@ -76,6 +77,7 @@ router.post('/route-preview', protect, async (req, res) => {
     if (!pickup?.lat || !destination?.lat) {
       return res.status(400).json({ message: 'pickup and destination with lat/lng are required' });
     }
+<<<<<<< Updated upstream
 
     if (!validateCoordinates(pickup.lat, pickup.lng)) {
       return res.status(400).json({ message: 'Invalid pickup coordinates' });
@@ -90,6 +92,12 @@ router.post('/route-preview', protect, async (req, res) => {
   } catch (err) {
     console.error('[rides/route-preview]', err.message);
     res.status(500).json({ message: 'Route preview failed', error: err.message });
+=======
+    const route = await buildRoute(pickup, destination);
+    res.json({ route });
+  } catch (err) {
+    res.status(500).json({ message: 'Route calculation failed', error: err.message });
+>>>>>>> Stashed changes
   }
 });
 
@@ -136,7 +144,12 @@ router.post('/', protect, async (req, res) => {
       return res.status(400).json({ message: `Vehicle only supports up to ${vehicle.seatingCapacity} seats` });
     }
 
-    const route = buildRoute(pickup, destination);
+    const dateCheck = validateDepartureDate(departureAt);
+    if (!dateCheck.ok) {
+      return res.status(400).json({ message: dateCheck.message });
+    }
+
+    const route = await buildRoute(pickup, destination);
 
     const ride = await Ride.create({
       driver: req.user._id,
@@ -181,6 +194,10 @@ router.get('/search', protect, async (req, res) => {
     };
 
     if (date) {
+      const dateCheck = validateDepartureDate(date);
+      if (!dateCheck.ok) {
+        return res.status(400).json({ message: dateCheck.message });
+      }
       const day = new Date(date);
       const start = new Date(day.setHours(0, 0, 0, 0));
       const end = new Date(day.setHours(23, 59, 59, 999));

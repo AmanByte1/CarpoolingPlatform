@@ -43,8 +43,10 @@ function generateMultiLayerCurves(t, distance, seed) {
 
 // Builds highly realistic route with multi-layer curves and adaptive waypoints
 function buildRoute(pickup, destination) {
+// Fallback when OSRM is unavailable — interpolated straight line with slight jitter
+function buildSimulatedRoute(pickup, destination) {
   const straightKm = distanceKm(pickup, destination);
-  const distanceKmRounded = Math.max(0.5, Math.round(straightKm * 1.25 * 10) / 10); // road factor
+  const distanceKmRounded = Math.max(0.5, Math.round(straightKm * 1.25 * 10) / 10);
   const avgSpeedKmph = 32;
   const durationMin = Math.max(3, Math.round((distanceKmRounded / avgSpeedKmph) * 60));
 
@@ -64,6 +66,7 @@ function buildRoute(pickup, destination) {
   }
 
   const polyline = [];
+// <<<<<<< Updated upstream
   const seed = (pickup.lat + pickup.lng) * 1000; // Consistent seed based on pickup location
 
   // Direction vector for more realistic perpendicular deviations
@@ -86,6 +89,11 @@ function buildRoute(pickup, destination) {
     const totalLatDeviation = latDeviation * Math.abs(perpLat) + lngDeviation * 0.5;
     const totalLngDeviation = lngDeviation * Math.abs(perpLng) + latDeviation * 0.5;
 
+// =======
+  for (let i = 0; i <= steps; i++) {
+    const t = i / steps;
+    const jitter = Math.sin(t * Math.PI) * 0.0025 * (i % 2 === 0 ? 1 : -1);
+// >>>>>>> Stashed changes
     polyline.push({
       lat: pickup.lat + dLat * t + totalLatDeviation,
       lng: pickup.lng + dLng * t + totalLngDeviation,
@@ -99,6 +107,44 @@ function buildRoute(pickup, destination) {
   }
 
   return { distanceKm: distanceKmRounded, durationMin, polyline };
+}
+
+// Fetch real road route from OSRM (free, no API key needed)
+async function fetchOsrmRoute(pickup, destination) {
+  const url =
+    `https://router.project-osrm.org/route/v1/driving/` +
+    `${pickup.lng},${pickup.lat};${destination.lng},${destination.lat}` +
+    `?overview=full&geometries=geojson`;
+
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), 8000);
+  try {
+    const res = await fetch(url, { signal: controller.signal });
+    if (!res.ok) return null;
+
+    const data = await res.json();
+    if (data.code !== 'Ok' || !data.routes?.[0]) return null;
+
+    const route = data.routes[0];
+    const polyline = route.geometry.coordinates.map(([lng, lat]) => ({ lat, lng }));
+    const distanceKmRounded = Math.max(0.5, Math.round((route.distance / 1000) * 10) / 10);
+    const durationMin = Math.max(1, Math.round(route.duration / 60));
+
+    return { distanceKm: distanceKmRounded, durationMin, polyline };
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+// Builds a road-following route via OSRM; falls back to simulated route on failure
+async function buildRoute(pickup, destination) {
+  try {
+    const osrmRoute = await fetchOsrmRoute(pickup, destination);
+    if (osrmRoute && osrmRoute.polyline.length > 1) return osrmRoute;
+  } catch {
+    // OSRM unavailable — use fallback below
+  }
+  return buildSimulatedRoute(pickup, destination);
 }
 
 module.exports = { distanceKm, buildRoute };

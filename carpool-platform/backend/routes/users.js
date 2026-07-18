@@ -1,6 +1,7 @@
 const express = require('express');
 const User = require('../models/User');
 const { protect } = require('../middleware/auth');
+const { isValidPhone } = require('../utils/validate');
 
 const router = express.Router();
 
@@ -25,6 +26,7 @@ router.get('/profile', protect, async (req, res) => {
 
 // PUT /api/users/profile
 router.put('/profile', protect, async (req, res) => {
+<<<<<<< Updated upstream
   try {
     const { name, phone, avatarColor } = req.body;
     const user = await User.findById(req.user._id);
@@ -60,6 +62,20 @@ router.put('/profile', protect, async (req, res) => {
     console.error('[users/profile]', err.message);
     res.status(500).json({ message: 'Profile update failed', error: err.message });
   }
+=======
+  const { name, phone, avatarColor } = req.body;
+  const user = await User.findById(req.user._id);
+  if (name) user.name = name.trim();
+  if (phone) {
+    if (!isValidPhone(phone)) {
+      return res.status(400).json({ message: 'Phone must be a 10-digit number starting with 6–9' });
+    }
+    user.phone = String(phone).trim();
+  }
+  if (avatarColor) user.avatarColor = avatarColor;
+  await user.save();
+  res.json({ user: user.toSafeObject() });
+>>>>>>> Stashed changes
 });
 
 // Saved places (Home / Office / Custom)

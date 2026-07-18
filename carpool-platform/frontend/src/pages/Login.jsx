@@ -97,7 +97,7 @@ export default function Login() {
             <div>
               <label className="text-xs font-medium text-muted">Password</label>
               <input
-                type="password" required value={form.password}
+                type="password" required minLength={6} value={form.password}
                 onChange={(e) => setForm({ ...form, password: e.target.value })}
                 placeholder="••••••••"
                 className="mt-1.5 w-full px-4 py-2.5 rounded-xl border border-black/10 bg-card text-sm"

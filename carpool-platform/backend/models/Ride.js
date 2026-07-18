@@ -19,7 +19,20 @@ const rideSchema = new mongoose.Schema(
     distanceKm: { type: Number, required: true },
     durationMin: { type: Number, required: true },
     routePolyline: [{ lat: Number, lng: Number }],
-    departureAt: { type: Date, required: true },
+    departureAt: {
+      type: Date,
+      required: true,
+      validate: {
+        validator: function (v) {
+          const now = new Date();
+          const maxDate = new Date();
+          maxDate.setFullYear(maxDate.getFullYear() + 1);
+          // Allow departure today or within 1 year from now
+          return v >= now && v <= maxDate;
+        },
+        message: 'Departure date must be today or within 1 year from now',
+      },
+    },
     availableSeats: { type: Number, required: true },
     totalSeats: { type: Number, required: true },
     farePerSeat: { type: Number, required: true },

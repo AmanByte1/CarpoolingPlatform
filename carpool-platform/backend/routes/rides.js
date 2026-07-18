@@ -9,6 +9,26 @@ const { scoreRides } = require('../ml/matchScore');
 
 const router = express.Router();
 
+// Helper function to validate booking date (today or within 1 year)
+const validateDepartureDate = (dateStr) => {
+  const departureDate = new Date(dateStr);
+  const now = new Date();
+  const maxDate = new Date();
+  maxDate.setFullYear(maxDate.getFullYear() + 1);
+
+  // Departure must be today or later
+  if (departureDate < now) {
+    return { valid: false, message: 'Departure date must be today or later' };
+  }
+
+  // Departure cannot exceed 1 year from today
+  if (departureDate > maxDate) {
+    return { valid: false, message: 'Departure date cannot exceed 1 year from today' };
+  }
+
+  return { valid: true };
+};
+
 // POST /api/rides/suggest-fare -> AI-suggested fare per seat for the Offer Ride flow,
 // trained on this organization's own historical rides (falls back to a simple
 // distance-based baseline when there isn't enough data yet).
@@ -42,6 +62,13 @@ router.post('/', protect, async (req, res) => {
     if (!vehicleId || !pickup || !destination || !departureAt || !availableSeats || !farePerSeat) {
       return res.status(400).json({ message: 'Missing required fields to publish a ride' });
     }
+
+    // Validate departure date (today to 1 year from now)
+    const dateValidation = validateDepartureDate(departureAt);
+    if (!dateValidation.valid) {
+      return res.status(400).json({ message: dateValidation.message });
+    }
+
     const vehicle = await Vehicle.findOne({ _id: vehicleId, owner: req.user._id, isActive: true });
     if (!vehicle) {
       return res.status(400).json({ message: 'Please register a vehicle before publishing a ride' });

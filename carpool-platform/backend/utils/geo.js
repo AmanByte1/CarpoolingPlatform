@@ -12,25 +12,33 @@ function distanceKm(a, b) {
   return R * c;
 }
 
-// Builds a simple simulated route: a handful of interpolated points between
-// pickup and destination, so the frontend can draw a polyline without a paid
-// mapping API. Distance/duration are derived from the real haversine distance
-// with a road-distance correction factor.
+// Builds a realistic simulated route with grid-based waypoints:
+// For long distances, creates more waypoints to simulate actual road curves.
+// This avoids the "straight line" appearance on maps.
 function buildRoute(pickup, destination) {
   const straightKm = distanceKm(pickup, destination);
   const distanceKmRounded = Math.max(0.5, Math.round(straightKm * 1.25 * 10) / 10); // road factor
   const avgSpeedKmph = 32;
   const durationMin = Math.max(3, Math.round((distanceKmRounded / avgSpeedKmph) * 60));
 
-  const steps = 8;
+  // Dynamic waypoint calculation:
+  // Create 1 waypoint per 2km for better curve simulation
+  // Minimum 8 points, maximum 50 points
+  const numWaypoints = Math.max(8, Math.min(50, Math.ceil(straightKm / 2) + 2));
   const polyline = [];
-  for (let i = 0; i <= steps; i++) {
-    const t = i / steps;
-    // slight jitter perpendicular to the straight line to look like a real road
-    const jitter = Math.sin(t * Math.PI) * 0.0025 * (i % 2 === 0 ? 1 : -1);
+
+  for (let i = 0; i <= numWaypoints; i++) {
+    const t = i / numWaypoints; // Progress along the route (0 to 1)
+
+    // Create realistic curves using sine wave perpendicular to the straight line
+    // This simulates roads that curve naturally instead of going straight
+    const curveIntensity = Math.sin(t * Math.PI * 3) * 0.003 * (straightKm / 10);
+    const randomDeviation = (Math.random() - 0.5) * 0.0005; // Small random jitter
+    const totalDeviation = curveIntensity + randomDeviation;
+
     polyline.push({
-      lat: pickup.lat + (destination.lat - pickup.lat) * t + jitter,
-      lng: pickup.lng + (destination.lng - pickup.lng) * t + jitter,
+      lat: pickup.lat + (destination.lat - pickup.lat) * t + totalDeviation,
+      lng: pickup.lng + (destination.lng - pickup.lng) * t + totalDeviation,
     });
   }
 

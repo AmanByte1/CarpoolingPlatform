@@ -11,12 +11,24 @@ const signToken = (user) =>
     expiresIn: process.env.JWT_EXPIRES_IN || '7d',
   });
 
+// Helper function to validate phone number
+const validatePhone = (phone) => {
+  const phoneStr = String(phone).trim();
+  // Must be 10-11 digits, no letters or special characters
+  return /^\d{10,11}$/.test(phoneStr);
+};
+
 // POST /api/auth/register
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, phone, orgCode } = req.body;
     if (!name || !email || !password || !phone || !orgCode) {
       return res.status(400).json({ message: 'All fields are required' });
+    }
+
+    // Validate phone format (integer digits only)
+    if (!validatePhone(phone)) {
+      return res.status(400).json({ message: 'Phone must be 10-11 digits only (no letters or special characters)' });
     }
 
     const organization = await Organization.findOne({ code: orgCode.trim().toUpperCase(), isActive: true });
@@ -29,11 +41,14 @@ router.post('/register', async (req, res) => {
       return res.status(409).json({ message: 'An account with this email already exists' });
     }
 
+    // Convert phone to number
+    const phoneNumber = parseInt(String(phone), 10);
+
     const user = await User.create({
       name: name.trim(),
       email: email.trim().toLowerCase(),
       password,
-      phone,
+      phone: phoneNumber,
       organization: organization._id,
     });
 

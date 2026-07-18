@@ -1,0 +1,6 @@
+fi/node_modules/
+fi/.npm-cache/
+fi/outputs/
+fi/.git/
+fi/.DS_Store
+fi/.env

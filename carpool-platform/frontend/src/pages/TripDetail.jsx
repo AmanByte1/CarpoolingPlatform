@@ -220,7 +220,6 @@ export default function TripDetail() {
 
       <MapView
         pickup={trip.pickup} destination={trip.destination}
-        polyline={trip.ride?.routePolyline || []}
         liveLocation={trip.currentLocation}
         presenceMarkers={presenceMarkers}
         height={340}

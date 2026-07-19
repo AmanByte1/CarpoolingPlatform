@@ -12,13 +12,6 @@ import { useAuth } from '../context/AuthContext';
 
 const steps = ['Offer Ride', 'Route Confirmation', 'Published'];
 
-const todayStr = () => new Date().toISOString().slice(0, 10);
-const maxDateStr = () => {
-  const d = new Date();
-  d.setFullYear(d.getFullYear() + 1);
-  return d.toISOString().slice(0, 10);
-};
-
 export default function OfferRide() {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -27,7 +20,7 @@ export default function OfferRide() {
   const [vehicleId, setVehicleId] = useState('');
   const [pickup, setPickup] = useState(null);
   const [destination, setDestination] = useState(null);
-  const [date, setDate] = useState(todayStr());
+  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
   const [time, setTime] = useState('09:00');
   const [seats, setSeats] = useState(3);
   const [fare, setFare] = useState('');
@@ -125,8 +118,7 @@ export default function OfferRide() {
             <div className="grid sm:grid-cols-3 gap-4">
               <div>
                 <label className="text-xs font-medium text-muted flex items-center gap-1"><Calendar size={12} /> Date</label>
-                <input type="date" value={date} min={todayStr()} max={maxDateStr()}
-                  onChange={(e) => setDate(e.target.value)} className="mt-1.5 w-full px-4 py-2.5 rounded-xl border border-black/10 text-sm" />
+                <input type="date" value={date} onChange={(e) => setDate(e.target.value)} className="mt-1.5 w-full px-4 py-2.5 rounded-xl border border-black/10 text-sm" />
               </div>
               <div>
                 <label className="text-xs font-medium text-muted flex items-center gap-1"><Clock size={12} /> Time</label>

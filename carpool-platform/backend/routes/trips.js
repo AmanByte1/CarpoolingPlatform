@@ -42,8 +42,7 @@ router.get('/:id', protect, async (req, res) => {
     .populate('driver', 'name avatarColor ratingAvg phone')
     .populate('vehicle')
     .populate('passengers.user', 'name avatarColor phone')
-    .populate('liveShares.user', 'name avatarColor')
-    .populate({ path: 'ride', select: 'routePolyline' });
+    .populate('liveShares.user', 'name avatarColor');
   if (!trip) return res.status(404).json({ message: 'Trip not found' });
   if (!isParticipant(trip, req.user._id)) return res.status(403).json({ message: 'Not part of this trip' });
   res.json({ trip });

@@ -13,18 +13,9 @@ export default function Signup() {
 
   const update = (k) => (e) => setForm({ ...form, [k]: e.target.value });
 
-  const updatePhone = (e) => {
-    const digits = e.target.value.replace(/\D/g, '').slice(0, 10);
-    setForm({ ...form, phone: digits });
-  };
-
   const submit = async (e) => {
     e.preventDefault();
     setError('');
-    if (!/^[6-9]\d{9}$/.test(form.phone)) {
-      setError('Enter a valid 10-digit phone number (digits only, starting with 6–9).');
-      return;
-    }
     setLoading(true);
     try {
       await register(form);
@@ -65,8 +56,7 @@ export default function Signup() {
             </div>
             <div>
               <label className="text-xs font-medium text-muted">Phone</label>
-              <input required inputMode="numeric" pattern="[6-9][0-9]{9}" maxLength={10}
-                value={form.phone} onChange={updatePhone} placeholder="98XXXXXXXX"
+              <input required value={form.phone} onChange={update('phone')} placeholder="98XXXXXXXX"
                 className="mt-1.5 w-full px-4 py-2.5 rounded-xl border border-black/10 text-sm" />
             </div>
           </div>
